@@ -1,0 +1,15 @@
+{
+  "name": "timepicker",
+  "version": "1.0.0",
+  "description": "potato",
+  "main": "scripts.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "anfe",
+  "license": "ISC",
+  "dependencies": {
+    "@polymer/lit-element": "^0.6.2",
+    "lit-html": "^0.12.0"
+  }
+}
