@@ -41,7 +41,7 @@ class TimePickerCanvas extends LitElement {
         this.dispatchEvent(closeEvent);
     }
  
-    //Formats the output
+    //Formats the output by placing leading zeros when necesarry.
     _pad(n) {
         return ('0'.repeat(2) + `${n}`).slice(`${n}`.length);
     }
@@ -126,7 +126,6 @@ class TimePickerCanvas extends LitElement {
  
         //Discriminate between touch and mouse event
         let clientXPos, clientYPos;
- 
         if (event.changedTouches) {
             clientXPos = event.changedTouches[0].clientX
             clientYPos = event.changedTouches[0].clientY
@@ -142,8 +141,8 @@ class TimePickerCanvas extends LitElement {
         x -= centerLength;
         y -= centerLength;
  
-        let closestFeasableNumber, minDistance = Infinity,//mode = 0 is hour, mode = 1 is minutes
-        numberPosition = (this.selectHour  ? hourPos : minutePos);
+        let closestFeasableNumber, minDistance = Infinity,
+        numberPosition = (this.selectHour  ? hourPos : minutePos);//selectHour = true is hour, false is minutes
  
         /*Drawing numbers on clockface. If currently selecting hours, either select 12 or 24 hours, else select minutes*/
         for (let i = 0; i < (this.selectHour ? (this.is24mode ? 24 : 12) : 60); i++){
@@ -164,7 +163,6 @@ class TimePickerCanvas extends LitElement {
     }
  
    
-    /*  ctx functions at https://www.w3schools.com/tags/ref_canvas.asp  */
     drawFace() {
        
         this.ctx.beginPath(); //reset pen
@@ -177,7 +175,6 @@ class TimePickerCanvas extends LitElement {
         this.ctx.fillStyle = '#333';
         this.ctx.lineWidth = 1.5;
         this.ctx.fill();
-       
     }
    
     drawNumbers(){
@@ -188,7 +185,8 @@ class TimePickerCanvas extends LitElement {
         console.debug("If selecting minutes, should be false", this.selectHour)
         const numberPosition = (this.selectHour  ? hourPos : minutePos);
         let minIncVec = [];
-        // At each index, hold a multiplum of 5.
+        
+        // At each index, hold a multiplum of 5. Used to only draw every fifth minute, starting at zero.
         for (let i = 0; i < 60; i +=5){
             minIncVec.push(i);
         }
@@ -200,9 +198,8 @@ class TimePickerCanvas extends LitElement {
             }
             }else{
             this.ctx.fillText((i+1).toString(), numberPosition[i].x, numberPosition[i].y);
+            }  
         }
-           
-    }
     }
        
     drawClock(){
@@ -241,6 +238,7 @@ class TimePickerCanvas extends LitElement {
                 #whole-component {
                     width: 150px;
                     background-color: white;
+                    cursor: pointer;
                 }
                 #ampm-container{
                     display:flex;
@@ -346,11 +344,12 @@ class TimePickerCanvas extends LitElement {
 customElements.define('time-picker-canvas', TimePickerCanvas);
  
  
-/* Maps numbers on the clock face to positon in x and y both ways. MinutePos and HourPos return maps that handles position of clock numbers to angles*/
+/* Maps numbers on the clock face to positon in x and y both ways. 
+MinutePos and HourPos return maps that handles position of clock numbers to angles*/
 const minutePos = (() => {
     const pos = {};
     const segment = (2 * Math.PI) / 60;
-    const offset = Math.PI / 2;
+    const offset = Math.PI / 2; // Zero degrees (i=0) is located @ 3/15:00 on a natural clock, so an offset of +90 degrees is required.
  
     for (let i = 0; i < 60; i++) {
         pos[i] = {x: 60 * Math.cos(segment * i - offset), y: 60 * Math.sin(segment * i - offset)};
@@ -361,14 +360,14 @@ const minutePos = (() => {
 const hourPos = (() => {
     const pos = {};
     const segment = (2 * Math.PI) / 12;
-    const offset = Math.PI / 3;
+    const offset = Math.PI / 3; // Zero degrees (i=0) is located @ 3/15:00 on a natural clock, hour = 0 is not a valid .
  
     for (let i = 0; i < 12; i++) {
-        pos[i] = {x: 60 * Math.cos(segment * i - offset), y: 60 * Math.sin(segment * i - offset)};
+        pos[i] = {x: 60 * Math.cos(segment * i /*- offset*/), y: 60 * Math.sin(segment * i /*- offset*/)};
     }
  
     for (let i = 0; i < 12; i++) {
-        pos[i + 12] = {x: 30 * Math.cos(segment * i - offset), y: 30 * Math.sin(segment * i - offset)};
+        pos[i + 12] = {x: 30 * Math.cos(segment * i /*- offset*/), y: 30 * Math.sin(segment * i /*- offset*/)};
     }
  
     return pos
