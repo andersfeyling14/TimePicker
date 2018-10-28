@@ -5,26 +5,30 @@ import './time-picker-canvas';
 class TimePickerCanvasDemo extends LitElement {
     static get properties() {
         return {
-            open0 : {type: Boolean},
-            open1 : {type: Boolean},
-            open2 : {type: Boolean},
-            is24mode : {type: Boolean},
-            am : {type: Boolean}
- 
+            open0: {type: Boolean},
+            open1: {type: Boolean},
+            open2: {type: Boolean},
+            is24mode: {type: Boolean},
+            am: {type: Boolean}
+
         }
     }
-    _onOpen0(){
+
+    _onOpen0() {
         this.open0 = true;
     }
-    _onOpen1(){
+
+    _onOpen1() {
         this.open1 = true;
     }
-    _onOpen2(){
+
+    _onOpen2() {
         this.open2 = true;
     }
-    _onConfirm(e,numId){
+
+    _onConfirm(e, numId) {
         let inputFromClass = e.detail;
-        let getFieldID = this.shadowRoot.querySelector("#inputField"+numId);
+        let getFieldID = this.shadowRoot.querySelector("#inputField" + numId);
 
         getFieldID.value = inputFromClass;
         this.open0 = false;
@@ -32,11 +36,12 @@ class TimePickerCanvasDemo extends LitElement {
         this.open2 = false;
     }
 
-    _onClose(){
+    _onClose() {
         this.open0 = false;
         this.open1 = false;
         this.open2 = false;
     }
+
     render() {
         // language=HTML
         return html`
@@ -57,17 +62,17 @@ class TimePickerCanvasDemo extends LitElement {
                 <input id="inputField2" @click="${e => this._onOpen2()}" readonly>
 
                 <time-picker-canvas .open="${this.open0}" .is24mode="${true}" 
-                    @confirmTime="${e => this._onConfirm(e,0)}"
+                    @confirmTime="${e => this._onConfirm(e, 0)}"
                     @close="${e => this._onClose()}">
                 </time-picker-canvas>
 
                 <time-picker-canvas .open="${this.open1}" 
-                    @confirmTime="${e => this._onConfirm(e,1)}"
+                    @confirmTime="${e => this._onConfirm(e, 1)}"
                     @close="${e => this._onClose()}">
                 </time-picker-canvas>
 
                 <time-picker-canvas class="is24mode" .open="${this.open2}" .is24mode="${false}"  
-                    @confirmTime="${e => this._onConfirm(e,2)}"
+                    @confirmTime="${e => this._onConfirm(e, 2)}"
                     @close="${e => this._onClose()}">
                 </time-picker-canvas>
             </div>
@@ -75,4 +80,4 @@ class TimePickerCanvasDemo extends LitElement {
     }
 }
 
-customElements.define('time-picker-canvas-demo', TimePickerCanvasDemo);
+customElements.define('time-picker-canvas-demo', TimePickerCanvasDemo);     

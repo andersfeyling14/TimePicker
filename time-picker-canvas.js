@@ -1,4 +1,4 @@
-import {LitElement, html, svg} from '@polymer/lit-element'; //Lit element allows for JS template literals, such as ${expression}
+import {LitElement, html} from '@polymer/lit-element'; //Lit element allows for JS template literals, such as ${expression}
  
  
 class TimePickerCanvas extends LitElement {
@@ -8,17 +8,17 @@ class TimePickerCanvas extends LitElement {
             is24mode : {type: Boolean},
             hour : {type: Number},
             minute : {type: Number},
-            am : {type: Boolean}
+            am : {type: Boolean},
         }
     }
     constructor(){
         super();
         this.open = false;
-        this.selectHour = true
+        this.selectHour = true;
         this.is24mode = false;
         this.hour = 10;
         this.minute = 0;
-       
+        this.numberList = [];
     }
     firstUpdated() { //Runs one time at start
         this.init();
@@ -61,7 +61,9 @@ class TimePickerCanvas extends LitElement {
         let pos = handlePos[drawThisNum];
         this.ctx.lineTo(pos.x, pos.y)
         this.ctx.stroke();
+
     }
+
     _onConfirm(){
         if (!this.is24mode){
         let confirmEvent = new CustomEvent('confirmTime', {
@@ -99,7 +101,7 @@ class TimePickerCanvas extends LitElement {
         }
     }
    
-    _onMouseDown(event){;
+    _onMouseDown(event){
         this.isMouseDown = true;
         this._updateClock(event);
     }
@@ -181,8 +183,7 @@ class TimePickerCanvas extends LitElement {
         this.ctx.font = this.radius*0.15 + "px arial";
         this.ctx.textBaseline = "middle";
         this.ctx.textAlign = "center";
-       
-        console.debug("If selecting minutes, should be false", this.selectHour)
+
         const numberPosition = (this.selectHour  ? hourPos : minutePos);
         let minIncVec = [];
         
@@ -293,6 +294,7 @@ class TimePickerCanvas extends LitElement {
                 }
                 ` : ` `}
             </style>
+           ${this.numberList.map(number => html`<div>${number}</div>`)}
            
             <div id="container">
                 <div id="whole-component">
@@ -319,7 +321,7 @@ class TimePickerCanvas extends LitElement {
                         </div>
  
                     </div>
-                    <canvas id="time-picker-canvas"
+                    <div id="time-picker-canvas"
                         width="150"
                         height="150"
                
@@ -330,7 +332,7 @@ class TimePickerCanvas extends LitElement {
                       @mousedown="${e=>this._onMouseDown(e)}"
                       @mouseup="${e=>this._onMouseUp(e)}"
                       @mousemove="${e=>this._onMouseMove(e)}">
-                    </canvas>
+                    </div>
                     <div id="time-picker-footer">
                         <div class="actionButton" @click="${e=>this._close()}">  Close </div>
                         <div class="actionButton" @click="${e=>this._onConfirm()}"> Confirm </div>
@@ -369,6 +371,5 @@ const hourPos = (() => {
     for (let i = 0; i < 12; i++) {
         pos[i + 12] = {x: 30 * Math.cos(segment * i /*- offset*/), y: 30 * Math.sin(segment * i /*- offset*/)};
     }
- 
-    return pos
+    return pos;
 })();
