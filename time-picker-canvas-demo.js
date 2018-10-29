@@ -80,4 +80,4 @@ class TimePickerCanvasDemo extends LitElement {
     }
 }
 
-customElements.define('time-picker-canvas-demo', TimePickerCanvasDemo);     
+customElements.define('time-picker-canvas-demo', TimePickerCanvasDemo);

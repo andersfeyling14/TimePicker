@@ -9,6 +9,7 @@ class TimePickerCanvas extends LitElement {
             hour : {type: Number},
             minute : {type: Number},
             am : {type: Boolean},
+            selectHour : {type: Boolean}
         }
     }
     constructor(){
@@ -18,24 +19,8 @@ class TimePickerCanvas extends LitElement {
         this.is24mode = false;
         this.hour = 10;
         this.minute = 0;
-        this.numberList = [];
     }
-    firstUpdated() { //Runs one time at start
-        this.init();
-    }
-    init() {
-        this.canvas = this.shadowRoot.querySelector("canvas");
-        this.ctx = this.canvas.getContext("2d"); //Spawning a 2D drawing object for the canvas scene
- 
-        this.radius = this.canvas.height/2; //Dynamically set the radius. The clock radius is scale invariant
-        this.ctx.translate(this.radius, this.radius); //Centering
-        //this.radius = this.radius * 0.90; //Reducing the radius by 10% to create padding.
-        /* Drawing the initial clock face */
-        this.drawFace();
-        this.drawNumbers();
-        this._drawHandle();
-        console.log("Drawing clock face"); //Debug
-    }
+
     _close(){
         let closeEvent = new CustomEvent('close', {});
         this.dispatchEvent(closeEvent);
@@ -51,17 +36,6 @@ class TimePickerCanvas extends LitElement {
         if (changedProperties.has("open")) {
             document.body.style.overflow = this.open ? 'hidden' : ''; 
         }
-    }
-    _drawHandle(){
- 
-        let handlePos = this.selectHour ? hourPos : minutePos;
-        let drawThisNum = this.selectHour ? this.hour : this.minute;
-        this.ctx.beginPath();
-        this.ctx.moveTo(0,0);
-        let pos = handlePos[drawThisNum];
-        this.ctx.lineTo(pos.x, pos.y)
-        this.ctx.stroke();
-
     }
 
     _onConfirm(){
@@ -91,7 +65,6 @@ class TimePickerCanvas extends LitElement {
             this._updateClock(event);
         } else {
             this.selectHour = true;
-            this.drawClock(0);
         }
     }
    
@@ -123,23 +96,24 @@ class TimePickerCanvas extends LitElement {
     }
  
     _updateClock(event) {
- 
-        let rect = this.canvas.getBoundingClientRect();
- 
+
+        let rect= this.shadowRoot.querySelector("#clock-face").getBoundingClientRect();
+
+
         //Discriminate between touch and mouse event
         let clientXPos, clientYPos;
         if (event.changedTouches) {
-            clientXPos = event.changedTouches[0].clientX
-            clientYPos = event.changedTouches[0].clientY
+            clientXPos = event.changedTouches[0].clientX;
+            clientYPos = event.changedTouches[0].clientY;
         } else {      
-            clientXPos = event.clientX
-            clientYPos = event.clientY
+            clientXPos = event.clientX;
+            clientYPos = event.clientY;
         }
  
         let x =  clientXPos - rect.left;
         let y = clientYPos - rect.top;
  
-        let centerLength =  this.canvas.width/2;
+        let centerLength =  rect.width/2;
         x -= centerLength;
         y -= centerLength;
  
@@ -160,117 +134,145 @@ class TimePickerCanvas extends LitElement {
             this.hour = closestFeasableNumber
         } else {
             this.minute = closestFeasableNumber
+            console.log("minute is", this.minute);
         }
-        this.drawClock();
+        console.debug("closestFeasableNumber is", closestFeasableNumber)
     }
- 
-   
-    drawFace() {
-       
-        this.ctx.beginPath(); //reset pen
-        this.ctx.arc(0, 0, this.radius, 0, 2*Math.PI); //arc(centerX, centerY, radius, startAngle, endAngle)
-        this.ctx.fillStyle = "white";
-        this.ctx.fill();
-       
-        this.ctx.beginPath();
-        this.ctx.arc(0, 0, this.radius*0.05, 0, 2*Math.PI);
-        this.ctx.fillStyle = '#333';
-        this.ctx.lineWidth = 1.5;
-        this.ctx.fill();
-    }
-   
-    drawNumbers(){
-        this.ctx.font = this.radius*0.15 + "px arial";
-        this.ctx.textBaseline = "middle";
-        this.ctx.textAlign = "center";
 
-        const numberPosition = (this.selectHour  ? hourPos : minutePos);
-        let minIncVec = [];
-        
-        // At each index, hold a multiplum of 5. Used to only draw every fifth minute, starting at zero.
-        for (let i = 0; i < 60; i +=5){
-            minIncVec.push(i);
-        }
- 
-        for (let i = 0; i < (this.selectHour ? (this.is24mode ? 24 : 12) : 60 ); i++) {
-            if (!this.selectHour){
-                if (minIncVec.includes(i)){
-                this.ctx.fillText((i).toString(), numberPosition[i].x, numberPosition[i].y);
-            }
-            }else{
-            this.ctx.fillText((i+1).toString(), numberPosition[i].x, numberPosition[i].y);
-            }  
-        }
-    }
-       
-    drawClock(){
-        this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height); //Purge elements
-        this.drawFace();
-        this.drawNumbers();
-        this._drawHandle();
-    }
     render() {
-        // language=HTML
+        let handleAngle = this.selectHour ? 360*(this.hour+1)/12 - 90 : 360*(this.minute)/60 - 90;
+        let handleWidth = this.selectHour ? (this.hour > 12 ? "20%" : "35%") : "35%";
+
         return html`
             <style>
                 :host {
                     display: block;
                 }
-                #container {
+                #background {
                     display: flex;
+                    background-color: rgba(0,0,0,0.5);
+                    user-select: none;
                     position: fixed;
                     width: 100%;
                     height: 100%;
                     top: 0;
-                    left: 0;
                     align-items: center;
                     justify-content: center;
                     flex-direction: column;
                 }
-                #time-picker-header {
+
+                #output-container {
                     display: flex;
-                    background-color: lightslategray;
+                    height: 100%;
+                    width: 30%;
+                    color: rgba(255,255,255,0.4);
+                    background-color: #5c826b;
                     justify-content: center;
+                    flex-direction: row;
                     align-items: center;
-                    margin-bottom: 3px;
-                    height: 25px;
+                    font-size: 40px;
                 }
 
-                #whole-component {
-                    width: 150px;
+                #foreground {
                     background-color: white;
                     cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    height: 350px;
+                    width: 500px;  
+  
                 }
                 #ampm-container{
                     display:flex;
                     flex-direction: column;
-                    font-size: 8px;
+                    font-size: 14px;
                     margin-left: 2px;
                 }
-                #time-picker-footer {
+                
+                #button-container {
                     display: flex;
-                    background-color: lightslategray;
-                    justify-content: space-around;
-                    
+                    justify-content: flex-end;
+                    padding: 10px;
                 }
                 
                 .actionButton {
                     display: flex;
                     padding: 3px;
-                    font-size: 15px;
+                    font-size: 25px;
                     border: 1px;
-                    flex: 1;
+                    color: #5c826b;
                     justify-content: center;
-                }
-
-                .actionButton:first-of-type {
-                    border-right: 1px solid;
+                    margin-right: 10px;
                 }
 
 
+                #clock-container {
+                    display: flex;
+                    position: relative;
+                    border-radius: 50%;
+                    flex-direction: row;
+                    justify-content: center;
+                    align-items: center;
+                    flex: 1;
+                }
+                
+                #clock-face {
+                    position: relative;
+                    height: 240px;
+                    width: 240px;
+                    border-radius: 50%;
+                    background-color: #eeeeee;
+                    
+                    
+                }
+                #inputContainer{
+                    display: flex;
+                    height: 100%;
+                    width: 70%;
+                    flex-direction: column;
+                }
+                
+                #clock-face>.number{
+                    
+                    display: flex;
+                    transform-origin: 50% 50%;
+                    position: absolute;
+                    top: 0px;
+                    left: 0px;
+                    width: 20px;
+                    justify-content: center;
+                    align-items: center;
+                }
+                
+                .handle{
+                    transform-origin: 0 50%;
+                    transform: translate(120px, 120px) rotate( ${handleAngle}deg);
+                    height: 2px;
+                    width: ${handleWidth};
+                    border-radius: 2px;
+                    background-color: #5c826b;
+                }
+                #selector-highlight{
+                    border-radius: 50%;
+                    width: 30px;
+                    height: 30px;
+                    background-color: #5c826b;
+                    transform: translate(75px, -15px);
+                }
+                #center-point{
+                    transform: translate(115px, 115px);
+                    width: 10px;
+                    height: 10px;
+                    background-color: #5c826b;
+                    border-radius: 50%;
+                }
+                
+
+                
                 ${this.am ? `
                 #am {
-                        color: white;
+                    color: white;
                 }
                 ` : `
                 #pm {
@@ -278,65 +280,88 @@ class TimePickerCanvas extends LitElement {
                 }
                 `}
                 
-                
-
+                ${this.selectHour ? `
+    
+                    #header-hour {
+                        color: white;
+                    }
+                    ` : `
+                    #header-minute {
+                        color: white;
+                    }
+                    `}
+                    
+    
                 ${this.is24mode ? `
-                #ampm-container{
-                    display:none
+                #ampm-container {
+                    display: none;
                 }
-                `: ``}
+                ` : ``}
  
                
  
                 ${!this.open ? `
-                #container {
+                #background {
                     display: none
                 }
                 ` : ` `}
+                
+
+
             </style>
-           ${this.numberList.map(number => html`<div>${number}</div>`)}
            
-            <div id="container">
-                <div id="whole-component">
-                    <div id="time-picker-header">
+           
+            <div id="background">
+                <div id="foreground">
+                    <div id="output-container">
                        
-                        <div id="time-picker-header-hour"
-                        @click ="${ e=> {this.selectHour = true;this.drawClock();}}" >
-                            ${this._pad(this.hour+1)}
+                        
+                        <div id="header-hour"
+                        @click ="${ e => {this.selectHour = true; }}" >
+                            ${this._pad(this.hour + 1)}
                         </div>
                         <div>:</div>
-                        <div id="time-picker-header-minute"
-                        @click = "${ e=> {this.selectHour = false; this.drawClock();}}">
+                        <div id="header-minute"
+                        @click = "${ e => {this.selectHour = false; }}">
                             ${this._pad(this.minute)}
                         </div>
-                        
                         <div id="ampm-container">
                             <div id="pm"
-                            @click ="${ e=> {this.am = false;}}" > PM 
+                            @click ="${ e => {this.am = false;}}" > PM 
                             </div>
 
                             <div id="am"                            
-                            @click ="${ e=> {this.am = true;}}"> AM 
+                            @click ="${ e => {this.am = true; }}"> AM 
                             </div>
                         </div>
+                    </div>
+                    <div id="inputContainer">
+                        <div id="clock-container">
+                            <div id="clock-face"
+                                    @touchstart="${e => this._onTouchStart(e)}"
+                                    @touchend="${e => this._onTouchEnd(e)}"
+                                    @touchmove="${e => this._onTouchMove(e)}"
  
+                                    @mousedown="${e => this._onMouseDown(e)}"
+                                    @mouseup="${e => this._onMouseUp(e)}"
+                                    @mousemove="${e => this._onMouseMove(e)}">
+                                <div class="handle">
+                                    <div id="selector-highlight"></div>
+                                </div>
+                                <div id="center-point"></div>
+                                
+                                ${this.selectHour ? hourNumbers.slice(0, (this.is24mode ? 24 : 12)): ``}
+                                ${!this.selectHour ? minuteNumbers : ``}
+                                                        
+                            </div>
+                        </div>
+                        <div id="button-container">
+                            <div class="actionButton" @click="${e => this._close()}">  Close </div>
+                            <div class="actionButton" @click="${e => this._onConfirm()}"> Confirm </div>
+                        </div>
                     </div>
-                    <div id="time-picker-canvas"
-                        width="150"
-                        height="150"
-               
-                       @touchstart="${e=>this._onTouchStart(e)}"
-                       @touchend="${e=>this._onTouchEnd(e)}"
-                       @touchmove="${e=>this._onTouchMove(e)}"
- 
-                      @mousedown="${e=>this._onMouseDown(e)}"
-                      @mouseup="${e=>this._onMouseUp(e)}"
-                      @mousemove="${e=>this._onMouseMove(e)}">
-                    </div>
-                    <div id="time-picker-footer">
-                        <div class="actionButton" @click="${e=>this._close()}">  Close </div>
-                        <div class="actionButton" @click="${e=>this._onConfirm()}"> Confirm </div>
-                    </div>
+                    
+                    
                 </div>
             </div>
         `;
@@ -354,7 +379,7 @@ const minutePos = (() => {
     const offset = Math.PI / 2; // Zero degrees (i=0) is located @ 3/15:00 on a natural clock, so an offset of +90 degrees is required.
  
     for (let i = 0; i < 60; i++) {
-        pos[i] = {x: 60 * Math.cos(segment * i - offset), y: 60 * Math.sin(segment * i - offset)};
+        pos[i] = {x: 90 * Math.cos(segment * i - offset), y: 90 * Math.sin(segment * i - offset)};
     }
     return pos;
 })();
@@ -365,11 +390,29 @@ const hourPos = (() => {
     const offset = Math.PI / 3; // Zero degrees (i=0) is located @ 3/15:00 on a natural clock, hour = 0 is not a valid .
  
     for (let i = 0; i < 12; i++) {
-        pos[i] = {x: 60 * Math.cos(segment * i /*- offset*/), y: 60 * Math.sin(segment * i /*- offset*/)};
+        pos[i] = {x: 90 * Math.cos(segment * i - offset), y: 90 * Math.sin(segment * i - offset)};
     }
  
     for (let i = 0; i < 12; i++) {
-        pos[i + 12] = {x: 30 * Math.cos(segment * i /*- offset*/), y: 30 * Math.sin(segment * i /*- offset*/)};
+        pos[i + 12] = {x: 55 * Math.cos(segment * i - offset), y: 55 * Math.sin(segment * i - offset)};
     }
     return pos;
 })();
+const minuteNumbers = (() => {
+    const elements = [];
+
+    for (let i=0; i<60; i+=5){
+        elements.push(html`<div class="number" style="transform: translate(${minutePos[i].x+110}px,${minutePos[i].y+110}px)">${i}</div>`);
+    }
+    return elements;
+    })();
+
+
+const hourNumbers = (() => {
+    const elements = [];
+
+    for (let i=0; i<24; i++){
+        elements.push(html`<div class="number" style="transform: translate(${hourPos[i].x+110}px,${hourPos[i].y+110}px)">${i+1}</div>`);
+    }
+    return elements;
+    })();
