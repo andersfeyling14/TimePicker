@@ -141,7 +141,8 @@ class TimePickerCanvas extends LitElement {
 
     render() {
         let handleAngle = this.selectHour ? 360*(this.hour+1)/12 - 90 : 360*(this.minute)/60 - 90;
-        let handleWidth = this.selectHour ? (this.hour > 12 ? "20%" : "35%") : "35%";
+        let handleWidth = this.selectHour ? (this.hour >= 12 ? "20%" : "35%") : "35%";
+        let selectorLength = this.selectHour ? (this.hour >= 12 ? "45" : "75") : "75";
 
         return html`
             <style>
@@ -234,7 +235,6 @@ class TimePickerCanvas extends LitElement {
                 }
                 
                 #clock-face>.number{
-                    
                     display: flex;
                     transform-origin: 50% 50%;
                     position: absolute;
@@ -258,7 +258,9 @@ class TimePickerCanvas extends LitElement {
                     width: 30px;
                     height: 30px;
                     background-color: #5c826b;
-                    transform: translate(75px, -15px);
+                    /*transform: translate(75px, -15px);*/
+                    /*transform: translate(40px, -15px);*/
+                    transform: translate(${selectorLength}px, -15px);
                 }
                 #center-point{
                     transform: translate(115px, 115px);
